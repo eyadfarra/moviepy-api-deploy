@@ -1,0 +1,24 @@
+services:
+  moviepy-api:
+    build: .
+    container_name: moviepy-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app # mount app dir for live code reload
+      - ./app/fonts:/app/fonts
+      - ./data:/data # where rendered videos will be written
+    command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
+  # # example n8n service on same docker network
+  # n8n:
+  #   image: n8nio/n8n:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5678:5678"
+  #   environment:
+  #     - N8N_BASIC_AUTH_ACTIVE=true
+  #     - N8N_BASIC_AUTH_USER=admin
+  #     - N8N_BASIC_AUTH_PASSWORD=admin
+  #   depends_on:
+  #     - moviepy-api
