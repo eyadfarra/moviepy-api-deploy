@@ -41,6 +41,7 @@ class Animation(BaseModel):
     exit_duration: float = 0.5
     float_amplitude: int = 10
     float_speed: float = 2
+    effect: str = "fade"  # "fade" or "typing" (word-by-word reveal)
 
 
 class HeaderLine(BaseModel):
@@ -168,6 +169,52 @@ def float_position(base_y, amp, speed):
     return lambda t: ("center", base_y + amp * math.sin(t * speed))
 
 
+def create_typing_clips(text: str, style_kwargs: dict, start_time: float, 
+                        total_duration: float, position_func, exit_duration: float = 0.5):
+    """
+    Create word-by-word typing animation clips.
+    Returns a list of clips that when combined show words appearing progressively.
+    """
+    words = text.split()
+    if not words:
+        return []
+    
+    clips = []
+    num_words = len(words)
+    
+    # Time allocated for typing (leave room for exit fade)
+    typing_duration = total_duration * 0.7
+    time_per_word = typing_duration / num_words if num_words > 0 else typing_duration
+    
+    for i, word in enumerate(words):
+        # Build the text up to this word
+        cumulative_text = " ".join(words[:i+1])
+        
+        # Word appears at this time
+        word_start = start_time + (i * time_per_word)
+        # Word stays visible until end of clip
+        word_duration = (start_time + total_duration) - word_start
+        
+        if word_duration <= 0:
+            continue
+        
+        # Create clip for this stage of typing
+        word_kwargs = style_kwargs.copy()
+        word_kwargs["text"] = cumulative_text
+        
+        clip = TextClip(**word_kwargs)
+        clip = clip.with_start(word_start).with_duration(word_duration)
+        clip = clip.with_position(position_func)
+        
+        # Add fade out only to the last word (the complete text)
+        if i == num_words - 1:
+            clip = clip.with_effects([vfx.CrossFadeOut(exit_duration)])
+        
+        clips.append(clip)
+    
+    return clips
+
+
 def apply_blur(image):
     """Apply Gaussian blur to frame for text readability."""
     from PIL import Image, ImageFilter
@@ -270,6 +317,9 @@ def process_render_job(request_data: dict) -> str:
 
     main_style = request_data["main_style"]
     sub_style = request_data["sub_style"]
+    
+    # Check for typing animation effect
+    anim_effect = anim.get("effect", "fade")
 
     for seg in segment_infos:
         seg_start = seg["start"]
@@ -283,20 +333,46 @@ def process_render_job(request_data: dict) -> str:
                 text = item.get("text", "") if isinstance(item, dict) else item
                 d = (item.get("duration") if isinstance(item, dict) else None) or auto_dur
                 
-                clip = make_text_clip(
-                    text,
-                    main_style["font"],
-                    main_style["fontsize"],
-                    main_style["bg_color"]
-                )
-                clip = clip.with_start(current_t).with_duration(d)
-                clip = clip.with_position(
-                    float_position(TARGET_H * 0.40, float_amp, float_spd)
-                ).with_effects([
-                    vfx.CrossFadeIn(enter_dur),
-                    vfx.CrossFadeOut(exit_dur)
-                ])
-                layers.append(clip)
+                # Build style kwargs for text clip
+                style_kwargs = {
+                    "text": text,
+                    "font_size": main_style.get("fontsize", 60),
+                    "color": "white",
+                    "size": (TARGET_W - 80, None),
+                    "method": "caption",
+                    "margin": (20, 15)
+                }
+                
+                # Add font if available
+                main_font = main_style.get("font")
+                if main_font:
+                    font_path = f"/fonts/{main_font}"
+                    if os.path.exists(font_path):
+                        style_kwargs["font"] = font_path
+                
+                # Add bg_color if set
+                main_bg = main_style.get("bg_color")
+                if main_bg:
+                    style_kwargs["bg_color"] = parse_color(main_bg)
+                
+                position_func = float_position(TARGET_H * 0.42, float_amp, float_spd)
+                
+                if anim_effect == "typing":
+                    # Use typing animation (word-by-word)
+                    typing_clips = create_typing_clips(
+                        text, style_kwargs, current_t, d, position_func, exit_dur
+                    )
+                    layers.extend(typing_clips)
+                else:
+                    # Use standard fade animation
+                    clip = TextClip(**style_kwargs)
+                    clip = clip.with_start(current_t).with_duration(d)
+                    clip = clip.with_position(position_func).with_effects([
+                        vfx.CrossFadeIn(enter_dur),
+                        vfx.CrossFadeOut(exit_dur)
+                    ])
+                    layers.append(clip)
+                
                 current_t += d
 
         # Sub texts
