@@ -1,0 +1,20 @@
+# Data files (rendered videos)
+data/*
+!data/.gitkeep
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# OS files
+.DS_Store
+*.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Temp files
+*.log
+*.tmp
