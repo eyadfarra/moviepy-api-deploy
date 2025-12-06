@@ -138,12 +138,49 @@ def float_position(base_y, amp, speed):
     return lambda t: ("center", base_y + amp * math.sin(t * speed))
 
 
+def apply_blur(image):
+    """Apply Gaussian blur to frame for text readability."""
+    from PIL import Image, ImageFilter
+    import numpy as np
+    # Convert numpy array to PIL Image
+    pil_image = Image.fromarray(image)
+    # Apply Gaussian blur
+    blurred = pil_image.filter(ImageFilter.GaussianBlur(radius=5))
+    return np.array(blurred)
+
+
 def apply_effect(clip, effect):
+    """
+    Apply background effects to make white text more visible.
+    
+    Effects:
+    - 'bw': Black and white
+    - 'contrast': Increase contrast
+    - 'darken': Darken the video (50% brightness) - good for white text
+    - 'blur': Blur the background - makes text pop
+    - 'overlay': Blur + darken combined - best for text visibility
+    """
     e = effect.lower()
+    
     if e == "bw":
         return clip.with_effects([vfx.BlackAndWhite()])
+    
     if e == "contrast":
         return clip.with_effects([vfx.MultiplyColor(1.2)])
+    
+    if e == "darken":
+        # Darken to 50% brightness for better text visibility
+        return clip.with_effects([vfx.MultiplyColor(0.5)])
+    
+    if e == "blur":
+        # Apply Gaussian blur using image_transform
+        return clip.image_transform(apply_blur)
+    
+    if e == "overlay":
+        # Combine blur and darken for maximum text visibility
+        blurred = clip.image_transform(apply_blur)
+        return blurred.with_effects([vfx.MultiplyColor(0.6)])
+    
     return clip
 
 
