@@ -291,7 +291,7 @@ def process_render_job(request_data: dict) -> str:
                 )
                 clip = clip.with_start(current_t).with_duration(d)
                 clip = clip.with_position(
-                    float_position(TARGET_H * 0.44, float_amp, float_spd)
+                    float_position(TARGET_H * 0.40, float_amp, float_spd)
                 ).with_effects([
                     vfx.CrossFadeIn(enter_dur),
                     vfx.CrossFadeOut(exit_dur)
