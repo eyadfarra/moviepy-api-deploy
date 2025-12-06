@@ -157,12 +157,17 @@ def process_render_job(request_data: dict) -> str:
     bg_path = download_file(request_data["bg_video_url"], ".mp4")
     bg_raw = VideoFileClip(bg_path)
 
-    bg = bg_raw.resized(height=TARGET_H).cropped(
+    # Resize first, then crop
+    bg_resized = bg_raw.resized(height=TARGET_H)
+    print(f"DEBUG: bg_resized size = {bg_resized.size}")
+    
+    bg = bg_resized.cropped(
         width=TARGET_W,
         height=TARGET_H,
-        x_center=bg_raw.w/2,
-        y_center=bg_raw.h/2
+        x_center=bg_resized.w/2,
+        y_center=bg_resized.h/2
     )
+    print(f"DEBUG: bg cropped size = {bg.size}")
 
     segment_infos = []
     global_t = 0.0
@@ -254,24 +259,55 @@ def process_render_job(request_data: dict) -> str:
     # Combine audio
     final_audio = concatenate_audioclips([info["audio"] for info in segment_infos])
 
-    # Final composite
+    # Final composite - use explicit size since bg.size may be None in MoviePy 2.x
+    print(f"DEBUG: Creating composite with size ({TARGET_W}, {TARGET_H})")
     final = CompositeVideoClip([bg] + layers, size=(TARGET_W, TARGET_H))
     final = final.with_duration(total_duration).with_audio(final_audio)
 
-    # Write output
+    # Write output to /data volume (mounted from host)
+    os.makedirs("/data", exist_ok=True)
     filename = f"render_{uuid.uuid4()}.mp4"
-    out = f"/tmp/{filename}"
+    out = f"/data/{filename}"
+    
+    print(f"DEBUG: Writing video to: {out}")
 
     final.write_videofile(
         out,
         codec="libx264",
         audio_codec="aac",
         fps=request_data.get("fps", 30),
-        logger="bar"
+        logger="bar",
+        write_logfile=True  # Get ffmpeg log
     )
+    
+    print(f"DEBUG: write_videofile completed")
+    print(f"DEBUG: Expected output: {out}")
+    print(f"DEBUG: File exists: {os.path.exists(out)}")
+    
+    # Search everywhere
+    import glob
+    import subprocess
+    find_result = subprocess.run(["find", "/", "-name", "*.mp4", "-type", "f"], 
+                                  capture_output=True, text=True, timeout=10)
+    print(f"DEBUG: All mp4 files on system: {find_result.stdout.strip()}")
 
+    # Search for render files in find output
+    all_mp4 = find_result.stdout.strip().split('\n') if find_result.stdout.strip() else []
+    print(f"DEBUG: All mp4 files on system: {all_mp4}")
+    
+    # Check if our expected file exists
     if not os.path.exists(out):
-        raise Exception("Video rendering failed - output file not created")
+        # Try to find any render file
+        for mp4 in all_mp4:
+            if "render_" in mp4 and os.path.exists(mp4):
+                print(f"DEBUG: Found render file at {mp4}")
+                out = mp4
+                break
+    
+    if not os.path.exists(out):
+        # Last resort - use one of the temp mp4 files if it's our video
+        # This shouldn't happen but MoviePy 2.x seems buggy
+        raise Exception(f"Video rendering failed - file not found at {out}. All mp4: {all_mp4}")
 
     # Cleanup temp files
     try:
@@ -300,7 +336,7 @@ def submit_render(req: RenderRequest):
     return JobResponse(
         job_id=job_id,
         status="pending",
-        message="Job submitted successfully. Poll /status/{job_id} for updates."
+        message=f"Job submitted successfully. Poll /status/{job_id} for updates."
     )
 
 

@@ -1,0 +1,26 @@
+ffmpeg version 7.0.2-static https://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2024 the FFmpeg developers
+  built with gcc 8 (Debian 8.3.0-6)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gmp --enable-libgme --enable-gray --enable-libaom --enable-libfribidi --enable-libass --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libvorbis --enable-libopus --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libdav1d --enable-libxvid --enable-libzimg
+  libavutil      59.  8.100 / 59.  8.100
+  libavcodec     61.  3.100 / 61.  3.100
+  libavformat    61.  1.100 / 61.  1.100
+  libavdevice    61.  1.100 / 61.  1.100
+  libavfilter    10.  1.100 / 10.  1.100
+  libswscale      8.  1.100 /  8.  1.100
+  libswresample   5.  1.100 /  5.  1.100
+  libpostproc    58.  1.100 / 58.  1.100
+[aist#0:0/pcm_s32le @ 0x9d7e020] Guessed Channel Layout: stereo
+Input #0, s32le, from 'fd:':
+  Duration: N/A, bitrate: 2822 kb/s
+  Stream #0:0: Audio: pcm_s32le, 44100 Hz, stereo, s32, 2822 kb/s
+Stream mapping:
+  Stream #0:0 -> #0:0 (pcm_s32le (native) -> aac (native))
+Output #0, mp4, to 'render_2e0ca9ab-3a0a-4fb6-9cbf-e0264aa9645cTEMP_MPY_wvf_snd.mp4':
+  Metadata:
+    encoder         : Lavf61.1.100
+  Stream #0:0: Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 128 kb/s
+      Metadata:
+        encoder         : Lavc61.3.100 aac
+[out#0/mp4 @ 0x9d7e1a0] video:0KiB audio:321KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 1.332011%
+size=     325KiB time=00:00:20.59 bitrate= 129.4kbits/s speed=64.9x    
+[aac @ 0x9be78f0] Qavg: 1720.247
