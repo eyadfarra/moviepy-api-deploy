@@ -6,9 +6,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app # mount app dir for live code reload
-      - ./app/fonts:/app/fonts
-      - ./data:/data # where rendered videos will be written
+      - ./app:/app # App code for live reload
+      - ./fonts:/fonts # Fonts directory (outside app)
+      - ./data:/data # Rendered videos
+      - ./logs:/logs # Log files
     command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
   # # example n8n service on same docker network
   # n8n:

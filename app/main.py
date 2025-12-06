@@ -31,9 +31,9 @@ class Segment(BaseModel):
 
 
 class TextStyle(BaseModel):
-    font: str
-    fontsize: int
-    bg_color: str
+    font: Optional[str] = None  # Optional - uses system default if not provided
+    fontsize: int = 60
+    bg_color: Optional[str] = None
 
 
 class Animation(BaseModel):
@@ -117,21 +117,35 @@ def parse_color(color_str: str):
     return color_str
 
 
-def make_text_clip(text: str, font: str, fontsize: int, bg_color: str):
+def make_text_clip(text: str, font: str = None, fontsize: int = 60, bg_color: str = None):
     """Create a text clip with the given style."""
-    font_path = f"/app/fonts/{font}"
-    if not os.path.exists(font_path):
-        raise Exception(f"Font not found: {font}")
-
-    return TextClip(
-        text=text,
-        font_size=fontsize,
-        font=font_path,
-        color="white",
-        bg_color=parse_color(bg_color),
-        size=(TARGET_W - 100, None),
-        method="caption"
-    )
+    # Handle font - use provided font, or fall back to system default
+    if font:
+        font_path = f"/fonts/{font}"  # Fonts mounted at /fonts
+        if not os.path.exists(font_path):
+            print(f"WARNING: Font {font} not found at {font_path}, using system default")
+            font_path = None
+    else:
+        font_path = None
+    
+    # Build kwargs - only include bg_color if provided
+    kwargs = {
+        "text": text,
+        "font_size": fontsize,
+        "color": "white",
+        "size": (TARGET_W - 80, None),
+        "method": "caption",
+        "margin": (20, 15)  # Increased margin for better visibility
+    }
+    
+    # Only set font if we have a valid path
+    if font_path:
+        kwargs["font"] = font_path
+    
+    if bg_color:
+        kwargs["bg_color"] = parse_color(bg_color)
+    
+    return TextClip(**kwargs)
 
 
 def float_position(base_y, amp, speed):
@@ -261,7 +275,7 @@ def process_render_job(request_data: dict) -> str:
                 )
                 clip = clip.with_start(current_t).with_duration(d)
                 clip = clip.with_position(
-                    float_position(TARGET_H * 0.38, float_amp, float_spd)
+                    float_position(TARGET_H * 0.44, float_amp, float_spd)
                 ).with_effects([
                     vfx.CrossFadeIn(enter_dur),
                     vfx.CrossFadeOut(exit_dur)
@@ -285,7 +299,7 @@ def process_render_job(request_data: dict) -> str:
                 )
                 clip = clip.with_start(current_t).with_duration(d)
                 clip = clip.with_position(
-                    float_position(TARGET_H * 0.55, float_amp, float_spd)
+                    float_position(TARGET_H * 0.52, float_amp, float_spd)
                 ).with_effects([
                     vfx.CrossFadeIn(enter_dur),
                     vfx.CrossFadeOut(exit_dur)
@@ -313,8 +327,7 @@ def process_render_job(request_data: dict) -> str:
         codec="libx264",
         audio_codec="aac",
         fps=request_data.get("fps", 30),
-        logger="bar",
-        write_logfile=True  # Get ffmpeg log
+        logger="bar"
     )
     
     print(f"DEBUG: write_videofile completed")
