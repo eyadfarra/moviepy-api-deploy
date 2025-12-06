@@ -43,12 +43,28 @@ class Animation(BaseModel):
     float_speed: float = 2
 
 
+class HeaderLine(BaseModel):
+    """A single line in the header."""
+    text: str  # Required
+    color: str = "white"
+    bg_color: Optional[str] = None
+    font: Optional[str] = None
+    fontsize: int = 50
+
+
+class HeaderConfig(BaseModel):
+    """Header configuration with multiple lines and shared animation."""
+    lines: List[HeaderLine]  # One or more lines
+    animation: Optional[Animation] = None  # Shared animation for all lines
+
+
 class RenderRequest(BaseModel):
     bg_video_url: str
     segments: List[Segment]
     main_style: TextStyle
     sub_style: TextStyle
     animation: Animation
+    header: Optional[HeaderConfig] = None  # Optional header at top
     effect: str = "none"
     fps: int = 30
 
@@ -306,6 +322,60 @@ def process_render_job(request_data: dict) -> str:
                 ])
                 layers.append(clip)
                 current_t += d
+
+    # --- HEADER (multi-line) ---
+    header_config = request_data.get("header")
+    if header_config and header_config.get("lines"):
+        header_lines = header_config.get("lines", [])
+        header_anim = header_config.get("animation")
+        
+        # Starting Y position (8% from top)
+        y_offset = TARGET_H * 0.06
+        line_spacing = 10  # pixels between lines
+        
+        for line_data in header_lines:
+            line_text = line_data.get("text", "") if isinstance(line_data, dict) else str(line_data)
+            if not line_text:
+                continue
+            
+            # Build text clip kwargs
+            line_kwargs = {
+                "text": line_text,
+                "font_size": line_data.get("fontsize", 50) if isinstance(line_data, dict) else 50,
+                "color": line_data.get("color", "white") if isinstance(line_data, dict) else "white",
+                "size": (TARGET_W - 80, None),
+                "method": "caption",
+                "margin": (15, 8)
+            }
+            
+            # Optional font
+            line_font = line_data.get("font") if isinstance(line_data, dict) else None
+            if line_font:
+                font_path = f"/fonts/{line_font}"
+                if os.path.exists(font_path):
+                    line_kwargs["font"] = font_path
+            
+            # Optional bg_color
+            line_bg = line_data.get("bg_color") if isinstance(line_data, dict) else None
+            if line_bg:
+                line_kwargs["bg_color"] = parse_color(line_bg)
+            
+            line_clip = TextClip(**line_kwargs)
+            line_clip = line_clip.with_start(0).with_duration(total_duration)
+            line_clip = line_clip.with_position(("center", y_offset))
+            
+            # Apply shared animation if provided
+            if header_anim:
+                line_clip = line_clip.with_effects([
+                    vfx.CrossFadeIn(header_anim.get("enter_duration", 0.5)),
+                    vfx.CrossFadeOut(header_anim.get("exit_duration", 0.5))
+                ])
+            
+            layers.append(line_clip)
+            
+            # Move Y down for next line (estimate line height based on fontsize)
+            line_height = line_data.get("fontsize", 50) if isinstance(line_data, dict) else 50
+            y_offset += line_height + line_spacing
 
     # Combine audio
     final_audio = concatenate_audioclips([info["audio"] for info in segment_infos])
