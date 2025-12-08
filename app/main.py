@@ -152,7 +152,7 @@ def make_text_clip(text: str, font: str = None, fontsize: int = 60, bg_color: st
         "color": "white",
         "size": (TARGET_W - 80, None),
         "method": "caption",
-        "margin": (20, 15)  # Increased margin for better visibility
+        "margin": (20, 35)  # Increased margin for better visibility and full font height
     }
     
     # Only set font if we have a valid path
@@ -340,7 +340,7 @@ def process_render_job(request_data: dict) -> str:
                     "color": "white",
                     "size": (TARGET_W - 80, None),
                     "method": "caption",
-                    "margin": (20, 15)
+                    "margin": (20, 35)
                 }
                 
                 # Add font if available

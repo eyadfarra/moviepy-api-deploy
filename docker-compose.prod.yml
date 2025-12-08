@@ -1,0 +1,38 @@
+services:
+
+  ###################################################
+  # N8N SERVICE (your original docker run config)
+  ###################################################
+  n8n:
+    container_name: n8n
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_PROTOCOL: "http"
+      N8N_HOST: "localhost"
+      # WEBHOOK_URL: "https://104.155.115.102.sslip.io"
+    volumes:
+      - ~/.n8n:/home/node/.n8n
+    depends_on:
+      - moviepy-api
+
+  ###################################################
+  # MOVIEPY API SERVICE (correct folder name!)
+  ###################################################
+  moviepy-api:
+    build: .
+    container_name: moviepy-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+      - ./fonts:/fonts
+      - ./data:/data
+      - ./logs:/logs
+    command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
+
+volumes:
+  n8n_data: {}
