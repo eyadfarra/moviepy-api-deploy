@@ -1,0 +1,26 @@
+# Combined n8n + yt-dlp Dockerfile
+# Based on the official n8n image with yt-dlp added
+
+FROM docker.n8n.io/n8nio/n8n
+
+# Switch to root to install packages
+USER root
+
+# Install Python, pip, and yt-dlp dependencies
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    ffmpeg \
+    && pip3 install --no-cache-dir --break-system-packages yt-dlp
+
+# Switch back to node user (n8n runs as node)
+USER node
+
+# n8n default port
+EXPOSE 5678
+
+# Environment variables (can be overridden in docker-compose)
+ENV N8N_PROTOCOL="http" \
+    N8N_HOST="localhost"
+
+# Inherit entrypoint and cmd from base n8n image (do not override)

@@ -15,24 +15,36 @@ services:
       # WEBHOOK_URL: "https://104.155.115.102.sslip.io"
     volumes:
       - ~/.n8n:/home/node/.n8n
+      - shared_data:/data
+      - /Users/eyadfarra/Downloads/test_slicing_video:/data/test
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      - moviepy-api
-
-  ###################################################
-  # MOVIEPY API SERVICE (correct folder name!)
-  ###################################################
-  moviepy-api:
-    build: .
-    container_name: moviepy-api
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
+      - yt-dlp
+    # depends_on:
+    #   - moviepy-api
+  yt-dlp:
+    image: jauderho/yt-dlp:latest
+    container_name: yt-dlp
     volumes:
-      - ./app:/app
-      - ./fonts:/fonts
-      - ./data:/data
-      - ./logs:/logs
-    command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
+      - shared_data:/data
+    entrypoint: [ "sleep", "infinity" ]
 
 volumes:
-  n8n_data: {}
+  n8n_data:
+  shared_data:
+
+    ###################################################
+    # MOVIEPY API SERVICE (correct folder name!)
+    ###################################################
+    # moviepy-api:
+    #   build: .
+    #   container_name: moviepy-api
+    #   restart: unless-stopped
+    #   ports:
+    #     - "8000:8000"
+    #   volumes:
+    #     - ./app:/app
+    #     - ./fonts:/fonts
+    #     - ./data:/data
+    #     - ./logs:/logs
+    #   command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
