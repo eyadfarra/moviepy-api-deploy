@@ -1,0 +1,18 @@
+services:
+  ###################################################
+  # N8N + YT-DLP COMBINED SERVICE
+  ###################################################
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.n8n-ytdlp
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_PROTOCOL: "http"
+      N8N_HOST: "0.0.0.0"
+      WEBHOOK_URL: "https://136.119.180.210.sslip.io"
+    volumes:
+      - ~/.n8n:/home/node/.N8N
