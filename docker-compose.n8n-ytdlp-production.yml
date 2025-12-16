@@ -16,4 +16,4 @@ services:
       WEBHOOK_URL: "https://136.119.180.210.sslip.io"
     volumes:
       - ~/.n8n:/home/node/.n8n
-      - ~/downloads:/data/downloaded
+      - ~/downloads:/home/downloaded
