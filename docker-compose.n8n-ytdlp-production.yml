@@ -17,4 +17,3 @@ services:
       N8N_FILESYSTEM_ALLOWED_PATHS: "/home/node/.n8n"
     volumes:
       - ~/.n8n:/home/node/.n8n
-      - ~/downloads:/home/node/downloaded
