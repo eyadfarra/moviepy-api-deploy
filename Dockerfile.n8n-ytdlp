@@ -1,7 +1,7 @@
 # Combined n8n + yt-dlp Dockerfile
 # Based on the official n8n image with yt-dlp added
 
-FROM docker.n8n.io/n8nio/n8n
+FROM docker.n8n.io/n8nio/n8n:1.122.4
 
 # Switch to root to install packages
 USER root

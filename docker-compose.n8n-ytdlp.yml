@@ -16,7 +16,4 @@ services:
       # WEBHOOK_URL: "https://your-domain.com"
     volumes:
       - ~/.n8n:/home/node/.n8n
-      - /Users/eyadfarra/Downloads/test_slicing_video:/data/downloaded
-
-volumes:
-  n8n_data:
+      - ~/Downloads/test_slicing_video:/home/node/downloaded
