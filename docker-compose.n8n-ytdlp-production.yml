@@ -14,6 +14,7 @@ services:
       N8N_PROTOCOL: "http"
       N8N_HOST: "0.0.0.0"
       WEBHOOK_URL: "https://136.119.180.210.sslip.io"
+      N8N_FILESYSTEM_ALLOWED_PATHS: "/home/node/.n8n"
     volumes:
       - ~/.n8n:/home/node/.n8n
       - ~/downloads:/home/node/downloaded
